@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-yfax-5v=kmb7nud9zp36%hi_oa84yl=gh%nv_*u=qyxncq^b2='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', '0') == '1'
 
 ALLOWED_HOSTS = ['127.0.0.1','localhost',"192.168.100.95","192.168.100.8","10.176.203.209","aphrc.site","backend.afrikajournals.org"]
 
