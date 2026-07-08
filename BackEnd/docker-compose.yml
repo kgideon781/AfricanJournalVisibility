@@ -7,9 +7,9 @@ services:
       - 127.0.0.1:5432:5432
       # - "127.0.0.1:5432:5432" # Bind to localhost
     environment: 
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -19,8 +19,8 @@ services:
     restart: always
 
     environment: 
-      PGADMIN_DEFAULT_EMAIL: a@a.com 
-      PGADMIN_DEFAULT_PASSWORD: a 
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-a@a.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-a}
     ports:
         - "127.0.0.1:5050:80"
       # - "127.0.0.1:5050:80" # Bind to localhost
@@ -37,10 +37,16 @@ services:
       # - "127.0.0.1:8000:8000" # Bind to localhost
 
     environment:
-      - DEBUG=0
-      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1
-      - CELERY_BROKER=amqp://rabbitmq:5672//
-      - CELERY_BACKEND=rpc://
+      - DEBUG=${DEBUG:-0}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost 127.0.0.1}
+      - POSTGRES_DB=${POSTGRES_DB:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_HOST=${POSTGRES_HOST:-pgdb}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - CELERY_BROKER=${CELERY_BROKER:-amqp://rabbitmq:5672//}
+      - CELERY_BACKEND=${CELERY_BACKEND:-rpc://}
     depends_on:
       - pgdb
       - rabbitmq
@@ -52,8 +58,8 @@ services:
     volumes:
       - .:/usr/src/BackEnd/
     environment:
-      - CELERY_BROKER=amqp://guest:guest@rabbitmq:5672//
-      - CELERY_BACKEND=rpc://
+      - CELERY_BROKER=${CELERY_BROKER:-amqp://guest:guest@rabbitmq:5672//}
+      - CELERY_BACKEND=${CELERY_BACKEND:-rpc://}
     depends_on:
       - pgdb
       - rabbitmq
@@ -65,8 +71,8 @@ services:
       volumes:
         - .:/usr/src/BackEnd/
       environment:
-        - CELERY_BROKER=amqp://guest:guest@rabbitmq:5672//
-        - CELERY_BACKEND=rpc://
+        - CELERY_BROKER=${CELERY_BROKER:-amqp://guest:guest@rabbitmq:5672//}
+        - CELERY_BACKEND=${CELERY_BACKEND:-rpc://}
       depends_on:
         - pgdb
         - rabbitmq
@@ -81,7 +87,7 @@ services:
         - "127.0.0.1:5555:5555"
         # - "127.0.0.1:5555:5555" # Bind to localhost
       environment:
-        - CELERY_BROKER=amqp://guest:guest@rabbitmq:5672//
+        - CELERY_BROKER=${CELERY_BROKER:-amqp://guest:guest@rabbitmq:5672//}
       depends_on:
         - rabbitmq
 
@@ -94,8 +100,8 @@ services:
       # - "127.0.0.1:5672:5672"   # Bind to localhost
       # - "127.0.0.1:15672:15672" # Bind to localhost
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS:-guest}
 
   
   
