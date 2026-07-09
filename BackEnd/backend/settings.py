@@ -130,7 +130,7 @@ SPECTACULAR_SETTINGS = {
 #https://aphrc.org/wp-content/themes/understrap-child/img/APHRC-primary-logo-large.png
 #"ACCESS_TOKEN_LIFETIME": timedelta(minutes=1440),
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=8),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=120),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
