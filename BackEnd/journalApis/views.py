@@ -365,10 +365,21 @@ class UserJournalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        # Filtering languages associated with journals authored by the user
+        # Staff/superusers can manage any journal via this viewset.
+        # "scope=all" on the list endpoint opts them into the all-journals
+        # view; without it their default remains "my journals" so the
+        # dashboard toggle behaves naturally. Retrieve/update/destroy for
+        # staff always resolves against all journals so admin edits of
+        # another user's journal work end-to-end.
+        if user.is_staff:
+            if self.action == 'list':
+                if self.request.query_params.get('scope') == 'all':
+                    return Journal.objects.all().distinct()
+                return Journal.objects.filter(user=user).distinct()
+            return Journal.objects.all().distinct()
         return Journal.objects.filter(user=user).distinct()
 
-   
+
 @extend_schema_view(
     list=extend_schema(
         tags=['Thematic Areas'],
