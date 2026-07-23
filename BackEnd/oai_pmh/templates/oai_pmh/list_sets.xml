@@ -1,0 +1,11 @@
+{% extends "oai_pmh/envelope.xml" %}
+{% block body %}
+<ListSets>
+  {% for s in sets %}
+  <set>
+    <setSpec>{{ s.spec }}</setSpec>
+    <setName>{{ s.name }}</setName>
+  </set>
+  {% endfor %}
+</ListSets>
+{% endblock %}

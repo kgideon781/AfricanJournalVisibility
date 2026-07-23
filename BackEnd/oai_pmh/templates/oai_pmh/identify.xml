@@ -1,0 +1,12 @@
+{% extends "oai_pmh/envelope.xml" %}
+{% block body %}
+<Identify>
+  <repositoryName>{{ repository_name }}</repositoryName>
+  <baseURL>{{ base_url }}</baseURL>
+  <protocolVersion>2.0</protocolVersion>
+  <adminEmail>{{ admin_email }}</adminEmail>
+  <earliestDatestamp>{{ earliest_datestamp }}</earliestDatestamp>
+  <deletedRecord>no</deletedRecord>
+  <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
+</Identify>
+{% endblock %}

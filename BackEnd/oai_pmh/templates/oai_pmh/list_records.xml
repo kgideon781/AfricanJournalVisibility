@@ -1,0 +1,12 @@
+{% extends "oai_pmh/envelope.xml" %}
+{% block body %}
+<ListRecords>
+  {% for r in records %}
+  <record>
+    {% include "oai_pmh/_header.xml" %}
+    {% include "oai_pmh/_dc_metadata.xml" %}
+  </record>
+  {% endfor %}
+  {% if resumption_token %}<resumptionToken cursor="{{ cursor }}">{{ resumption_token }}</resumptionToken>{% endif %}
+</ListRecords>
+{% endblock %}

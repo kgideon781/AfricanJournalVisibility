@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'django_celery_results',
     'blog',   
     'grey_literature',
+    'oai_pmh',
 ]
 
 REST_FRAMEWORK = { 

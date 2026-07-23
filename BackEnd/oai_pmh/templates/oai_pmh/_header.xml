@@ -1,0 +1,5 @@
+<header>
+  <identifier>{{ r.identifier }}</identifier>
+  <datestamp>{{ r.datestamp }}</datestamp>
+  {% for s in r.sets %}<setSpec>{{ s }}</setSpec>{% endfor %}
+</header>

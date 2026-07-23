@@ -1,0 +1,11 @@
+{% extends "oai_pmh/envelope.xml" %}
+{% block body %}
+<GetRecord>
+  {% with r=record %}
+  <record>
+    {% include "oai_pmh/_header.xml" %}
+    {% include "oai_pmh/_dc_metadata.xml" %}
+  </record>
+  {% endwith %}
+</GetRecord>
+{% endblock %}

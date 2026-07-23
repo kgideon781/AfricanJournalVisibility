@@ -1,0 +1,2 @@
+{% extends "oai_pmh/envelope.xml" %}
+{% block body %}<error code="{{ error_code }}">{{ error_message }}</error>{% endblock %}

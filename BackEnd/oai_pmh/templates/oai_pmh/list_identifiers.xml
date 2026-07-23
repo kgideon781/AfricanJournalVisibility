@@ -1,0 +1,7 @@
+{% extends "oai_pmh/envelope.xml" %}
+{% block body %}
+<ListIdentifiers>
+  {% for r in records %}{% include "oai_pmh/_header.xml" %}{% endfor %}
+  {% if resumption_token %}<resumptionToken cursor="{{ cursor }}">{{ resumption_token }}</resumptionToken>{% endif %}
+</ListIdentifiers>
+{% endblock %}

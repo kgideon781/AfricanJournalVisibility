@@ -1,0 +1,20 @@
+<metadata>
+  <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+             xmlns:dc="http://purl.org/dc/elements/1.1/"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+    {% if r.dc.title %}<dc:title>{{ r.dc.title }}</dc:title>{% endif %}
+    {% for c in r.dc.creators %}<dc:creator>{{ c }}</dc:creator>{% endfor %}
+    {% for s in r.dc.subjects %}<dc:subject>{{ s }}</dc:subject>{% endfor %}
+    {% if r.dc.description %}<dc:description>{{ r.dc.description }}</dc:description>{% endif %}
+    {% if r.dc.publisher %}<dc:publisher>{{ r.dc.publisher }}</dc:publisher>{% endif %}
+    {% if r.dc.date %}<dc:date>{{ r.dc.date }}</dc:date>{% endif %}
+    {% if r.dc.type %}<dc:type>{{ r.dc.type }}</dc:type>{% endif %}
+    {% if r.dc.format %}<dc:format>{{ r.dc.format }}</dc:format>{% endif %}
+    {% for i in r.dc.identifiers %}<dc:identifier>{{ i }}</dc:identifier>{% endfor %}
+    {% if r.dc.source %}<dc:source>{{ r.dc.source }}</dc:source>{% endif %}
+    {% if r.dc.language %}<dc:language>{{ r.dc.language }}</dc:language>{% endif %}
+    {% if r.dc.coverage %}<dc:coverage>{{ r.dc.coverage }}</dc:coverage>{% endif %}
+    {% if r.dc.rights %}<dc:rights>{{ r.dc.rights }}</dc:rights>{% endif %}
+  </oai_dc:dc>
+</metadata>
