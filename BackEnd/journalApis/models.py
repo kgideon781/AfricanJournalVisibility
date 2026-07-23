@@ -69,6 +69,37 @@ class Journal(models.Model):
      approved = models.BooleanField(default=False, null=True, blank=True)
      created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
+     # --- concept-doc §11 metadata additions (2026-07-23) ---
+     # Multi-value: keep old thematic_area / language FKs for backwards compat,
+     # add M2M for the spec-shaped multi-discipline / multi-language case.
+     disciplines = models.ManyToManyField(
+         ThematicArea, related_name="journals_multi", blank=True,
+     )
+     languages = models.ManyToManyField(
+         Language, related_name="journals_multi", blank=True,
+     )
+     doi_prefix = models.CharField(
+         max_length=32, blank=True, null=True,
+         help_text="CrossRef DOI prefix, e.g. 10.55555.",
+     )
+     indexed_in = models.JSONField(
+         default=dict, blank=True,
+         help_text="Flags like {scopus: true, wos: false, doaj: true}.",
+     )
+
+     class JournalStatus(models.TextChoices):
+         DRAFT = "draft", "Draft"
+         PENDING = "pending", "Pending review"
+         APPROVED = "approved", "Approved"
+         REJECTED = "rejected", "Rejected"
+         SUSPENDED = "suspended", "Suspended"
+
+     status = models.CharField(
+         max_length=16, choices=JournalStatus.choices,
+         default=JournalStatus.PENDING,
+         help_text="Richer replacement for the `approved` boolean.",
+     )
+
      class Meta:
         indexes = [
             # Composite index on platform, country, language, and thematic_area
@@ -202,6 +233,23 @@ class Article(models.Model):
 
     pdf_text = models.TextField(blank=True, null=True)
     search_vector = SearchVectorField(blank=True, null=True)
+
+    # --- concept-doc §11 metadata additions (2026-07-23) ---
+    authors_json = models.JSONField(
+        default=list, blank=True,
+        help_text="List of {name, orcid?, affiliation?} objects.",
+    )
+
+    class ArticleStatus(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        PUBLISHED = "published", "Published"
+        RETRACTED = "retracted", "Retracted"
+        WITHDRAWN = "withdrawn", "Withdrawn"
+
+    status = models.CharField(
+        max_length=16, choices=ArticleStatus.choices,
+        default=ArticleStatus.DRAFT,
+    )
 
     class Meta:
         indexes = [
