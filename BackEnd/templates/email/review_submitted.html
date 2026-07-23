@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<body style="font-family:Helvetica,Arial,sans-serif;color:#111;line-height:1.5;padding:16px;">
+  <h2 style="margin:0 0 12px;">Review submitted</h2>
+  <p>A review has been submitted for a manuscript in your queue.</p>
+  <table style="border-collapse:collapse;margin:12px 0;">
+    <tr><td style="padding:4px 12px 4px 0;color:#666;">Manuscript</td><td>{{ title }}</td></tr>
+    <tr><td style="padding:4px 12px 4px 0;color:#666;">Reviewer</td><td>{{ reviewer_name }}</td></tr>
+    <tr><td style="padding:4px 12px 4px 0;color:#666;">Recommendation</td><td><strong>{{ recommendation }}</strong></td></tr>
+    {% if score %}<tr><td style="padding:4px 12px 4px 0;color:#666;">Score</td><td>{{ score }}</td></tr>{% endif %}
+  </table>
+  <p>
+    <a href="{{ editor_url }}"
+       style="display:inline-block;background:#0f172a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">
+      Record a decision
+    </a>
+  </p>
+  <p style="color:#888;font-size:12px;">— African Journals Platform</p>
+</body>
+</html>

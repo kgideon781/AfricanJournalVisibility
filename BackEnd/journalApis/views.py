@@ -12,6 +12,10 @@ from .serializers import ManuscriptSerializer,ReviewSerializer,ReviewerAssignmen
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import JournalFilter,ArticleFilter
+from .notifications import (
+    notify_manuscript_submitted, notify_reviewer_assigned,
+    notify_review_submitted, notify_editorial_decision,
+)
 from rest_framework import generics
 from rest_framework.decorators import api_view
 import google.generativeai as genai
@@ -896,7 +900,8 @@ class ManuscriptCreateView(APIView):
     def post(self, request):
         serializer = ManuscriptSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(corresponding_author=request.user)
+            manuscript = serializer.save(corresponding_author=request.user)
+            notify_manuscript_submitted(manuscript)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1024,6 +1029,8 @@ class SubmitReviewView(APIView):
             assignment.is_completed = True
             assignment.save()
 
+            review = serializer.instance
+            notify_review_submitted(review)
             return Response(serializer.data, status=201)
 
         return Response(serializer.errors, status=400)
@@ -1104,6 +1111,7 @@ class EditorialDecisionView(APIView):
                 pdf=manuscript.file if manuscript.file else None,
             )
 
+        notify_editorial_decision(manuscript, decision, notes)
         return Response({
             "message": "Editorial decision recorded",
             "status": manuscript.status
@@ -1251,6 +1259,7 @@ class AssignReviewerView(APIView):
             manuscript=manuscript,
             reviewer=reviewer
         )
+        notify_reviewer_assigned(manuscript, reviewer)
 
         # 5. Atomic status transition
         if manuscript.status == "submitted":

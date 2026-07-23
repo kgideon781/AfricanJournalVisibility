@@ -1,0 +1,11 @@
+A review has been submitted for a manuscript in your queue.
+
+Manuscript:      {{ title }}
+Reviewer:        {{ reviewer_name }}
+Recommendation:  {{ recommendation }}
+{% if score %}Score:           {{ score }}
+{% endif %}
+Open the editorial dashboard to record a decision:
+{{ editor_url }}
+
+— African Journals Platform

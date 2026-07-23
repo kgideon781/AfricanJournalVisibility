@@ -1,0 +1,14 @@
+Hi {{ reviewer_name }},
+
+You have been assigned to review a manuscript submitted to {{ journal_title|default:"a journal" }}.
+
+Title:    {{ title }}
+Authors:  {{ authors }}
+
+{% if abstract %}Abstract:
+{{ abstract }}
+
+{% endif %}Please open the reviewer dashboard to read the full text and submit your review:
+{{ reviewer_url }}
+
+— African Journals Platform

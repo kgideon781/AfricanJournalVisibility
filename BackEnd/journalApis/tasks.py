@@ -86,3 +86,36 @@ def _extract_pdf_text(path):
         return "\n".join(pieces).strip()
     finally:
         doc.close()
+
+
+# ---------------------------------------------------------------------------
+# Peer-review notification delivery (see notifications.py)
+
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template import TemplateDoesNotExist
+from django.template.loader import render_to_string
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=120)
+def send_notification_email(self, *, template, subject, recipients, context):
+    if not recipients:
+        return
+    try:
+        text_body = render_to_string(f"email/{template}.txt", context)
+    except TemplateDoesNotExist:
+        logger.error("send_notification_email: missing text template %s", template)
+        return
+    try:
+        html_body = render_to_string(f"email/{template}.html", context)
+    except TemplateDoesNotExist:
+        html_body = None
+    from_addr = getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@afrikajournals.org")
+    msg = EmailMultiAlternatives(subject=subject, body=text_body, from_email=from_addr, to=recipients)
+    if html_body:
+        msg.attach_alternative(html_body, "text/html")
+    try:
+        msg.send(fail_silently=False)
+    except Exception as exc:
+        logger.warning("send_notification_email(%s): send failed: %s", template, exc)
+        raise self.retry(exc=exc)

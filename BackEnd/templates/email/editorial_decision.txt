@@ -1,0 +1,15 @@
+Hi {{ author_name }},
+
+An editorial decision has been recorded on your manuscript submitted to
+{{ journal_title|default:"the journal" }}.
+
+Title:     {{ title }}
+Decision:  {{ decision_label }}
+{% if notes %}
+Editor's notes:
+{{ notes }}
+{% endif %}
+View the full decision and next steps in your dashboard:
+{{ author_url }}
+
+— African Journals Platform

@@ -1,0 +1,10 @@
+A new manuscript has been submitted to {{ journal_title|default:"a journal" }}.
+
+Title:    {{ title }}
+Author:   {{ submitted_by|default:submitter_name }}
+Authors:  {{ authors }}
+
+Open in the editorial dashboard to assign a reviewer:
+{{ editor_url }}
+
+— African Journals Platform
