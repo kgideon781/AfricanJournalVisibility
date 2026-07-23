@@ -1100,7 +1100,8 @@ class EditorialDecisionView(APIView):
                 volume=manuscript.volume,
                 title=manuscript.title,
                 authors=manuscript.authors,
-                abstract=manuscript.abstract
+                abstract=manuscript.abstract,
+                pdf=manuscript.file if manuscript.file else None,
             )
 
         return Response({
