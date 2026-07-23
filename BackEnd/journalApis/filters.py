@@ -1,5 +1,5 @@
 import django_filters
-from django.db.models import Q
+from django.db.models import Q, F
 from .models import  Journal,Article
 # from django.contrib.postgres.search import SearchVector,SearchQuery, SearchRank
 from django.contrib.postgres.search import (
@@ -99,35 +99,28 @@ class ArticleFilter(django_filters.FilterSet):
 
     def custom_search(self, queryset, name, value):
         if not value:
-            return queryset  # Prevent unnecessary processing
+            return queryset
 
-        words = value.split()[:10]  # Limit to first 10 words to prevent deep recursion
-
-        # Use 'websearch' mode for better query interpretation
-        search_query = SearchQuery(words[0], search_type='websearch')
+        words = value.split()[:10]
+        search_query = SearchQuery(words[0], search_type='websearch', config='english')
         for word in words[1:]:
-            search_query |= SearchQuery(word, search_type='websearch')
+            search_query |= SearchQuery(word, search_type='websearch', config='english')
 
-        # Define the search vector
-        search_vector = SearchVector(
-            'title',
-            'abstract',
-            'keywords',
-            'authors',
-            'subjects',
-            'article_type',
-            'publisher'
-        )
-
-        # Annotate queryset with SearchRank and SearchHeadline for better results
+        # Rank against the stored, PDF-body-inclusive tsvector (populated by
+        # journalApis.tasks.extract_article_pdf).
         queryset = queryset.annotate(
-            rank=SearchRank(search_vector, search_query),
-            highlight=SearchHeadline('abstract', search_query)  # Highlights matched content in abstracts
+            rank=SearchRank(F('search_vector'), search_query),
+            highlight=SearchHeadline(
+                'abstract', search_query,
+                start_sel='<mark>', stop_sel='</mark>',
+                max_words=35, min_words=15,
+            ),
         )
 
-        # Article and related Journal filtering
         return queryset.filter(
-            Q(rank__gte=0.05) |  # Lowered threshold for better matches
+            Q(search_vector=search_query) |
+            # icontains fallback for related-Journal fields and freshly-created
+            # articles whose search_vector has not been computed yet.
             Q(title__icontains=value) |
             Q(abstract__icontains=value) |
             Q(keywords__icontains=value) |
@@ -135,12 +128,11 @@ class ArticleFilter(django_filters.FilterSet):
             Q(subjects__icontains=value) |
             Q(article_type__icontains=value) |
             Q(publisher__icontains=value) |
-            # Related Journal fields
             Q(journal__journal_title__icontains=value) |
             Q(journal__country__country__icontains=value) |
             Q(journal__language__language__icontains=value) |
             Q(journal__thematic_area__thematic_area__icontains=value)
-        ).order_by('-rank')  # Removed .distinct() to avoid recursion errors
+        ).order_by('-rank')
 
 
 

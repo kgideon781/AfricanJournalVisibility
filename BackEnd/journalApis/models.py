@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.contrib.postgres.search import SearchVectorField
+from django.contrib.postgres.indexes import GinIndex
    
 class Language(models.Model):
     language=models.CharField(max_length=1000)
@@ -33,6 +35,7 @@ class ThematicArea(models.Model):
      
 class Journal(models.Model):
      journal_title=models.CharField(max_length=1055)
+     slug = models.SlugField(max_length=200, unique=True, null=True, blank=True)
      #platform=models.ForeignKey(Platform,on_delete=models.CASCADE,unique=True,null=True, blank=True)
      platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True, blank=True)
      #country=models.ForeignKey(Country,on_delete=models.CASCADE,unique=True,null=True, blank=True)
@@ -64,6 +67,7 @@ class Journal(models.Model):
      summary = models.TextField(null=True, blank=True)
      user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
      approved = models.BooleanField(default=False, null=True, blank=True)
+     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
      class Meta:
         indexes = [
@@ -193,6 +197,16 @@ class Article(models.Model):
     print_issn = models.CharField(max_length=1050, blank=True, null=True)
     publisher = models.CharField(max_length=1255, blank=True, null=True)
     publisher_location = models.CharField(max_length=255, blank=True, null=True)
+    language = models.CharField(max_length=8, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    pdf_text = models.TextField(blank=True, null=True)
+    search_vector = SearchVectorField(blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            GinIndex(fields=["search_vector"], name="article_search_vector_gin"),
+        ]
 
     def __str__(self):
         if self.journal:
