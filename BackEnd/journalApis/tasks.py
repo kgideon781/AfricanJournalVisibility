@@ -4,7 +4,7 @@ import logging
 
 from celery import shared_task
 from django.contrib.postgres.search import SearchVector
-from django.db.models import Value
+from django.db.models import TextField, Value
 from django.db.models.functions import Coalesce
 
 from .models import Article
@@ -14,17 +14,20 @@ logger = logging.getLogger(__name__)
 FTS_CONFIG = "english"
 
 
+def _coalesce_text(field):
+    return Coalesce(field, Value(""), output_field=TextField())
+
+
 def _weighted_search_vector():
-    empty = Value("")
     return (
-        SearchVector(Coalesce("title", empty), weight="A", config=FTS_CONFIG)
-        + SearchVector(Coalesce("keywords", empty), weight="A", config=FTS_CONFIG)
-        + SearchVector(Coalesce("authors", empty), weight="B", config=FTS_CONFIG)
-        + SearchVector(Coalesce("abstract", empty), weight="B", config=FTS_CONFIG)
-        + SearchVector(Coalesce("subjects", empty), weight="B", config=FTS_CONFIG)
-        + SearchVector(Coalesce("article_type", empty), weight="C", config=FTS_CONFIG)
-        + SearchVector(Coalesce("publisher", empty), weight="C", config=FTS_CONFIG)
-        + SearchVector(Coalesce("pdf_text", empty), weight="D", config=FTS_CONFIG)
+        SearchVector(_coalesce_text("title"), weight="A", config=FTS_CONFIG)
+        + SearchVector(_coalesce_text("keywords"), weight="A", config=FTS_CONFIG)
+        + SearchVector(_coalesce_text("authors"), weight="B", config=FTS_CONFIG)
+        + SearchVector(_coalesce_text("abstract"), weight="B", config=FTS_CONFIG)
+        + SearchVector(_coalesce_text("subjects"), weight="B", config=FTS_CONFIG)
+        + SearchVector(_coalesce_text("article_type"), weight="C", config=FTS_CONFIG)
+        + SearchVector(_coalesce_text("publisher"), weight="C", config=FTS_CONFIG)
+        + SearchVector(_coalesce_text("pdf_text"), weight="D", config=FTS_CONFIG)
     )
 
 
