@@ -26,6 +26,7 @@ urlpatterns = [
     path('news/',include('news.urls')),
     path('funding/',include('funding.urls')),
     path('blog/',include('blog.urls')),
+    path('grey_api/', include('grey_literature.urls')),
     path('schema/',SpectacularAPIView.as_view(),name="schema"),
     path('',SpectacularSwaggerView.as_view(url_name='schema')),
     path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),  
