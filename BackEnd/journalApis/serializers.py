@@ -90,16 +90,30 @@ class JournalImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image', 'description']
 
 class JournalSerializer(serializers.ModelSerializer):
-    language=LanguageSerializer()
-    platform=PlatformSerializer()
-    country=CountrySerializer()
-    thematic_area=ThematicAreaSerializer()
-    # volumes = VolumeSerializer(many=True, read_only=True)
-    # articles=ArticleSerializer(many=True,read_only=True)
+    # FK fields: accept raw int (id) on write, expand to nested object on read
+    # so the API shape stays backward-compatible for callers that displayed
+    # journal.language.language (nested) while POST/PATCH clients that send
+    # {"language": 65, ...} now validate correctly.
+    language = serializers.PrimaryKeyRelatedField(queryset=Language.objects.all(), required=False, allow_null=True)
+    platform = serializers.PrimaryKeyRelatedField(queryset=Platform.objects.all(), required=False, allow_null=True)
+    country = serializers.PrimaryKeyRelatedField(queryset=Country.objects.all(), required=False, allow_null=True)
+    thematic_area = serializers.PrimaryKeyRelatedField(queryset=ThematicArea.objects.all(), required=False, allow_null=True)
     image = JournalImageSerializer(read_only=True)  # Only one image per journal, no 'many=True'
     class Meta:
         model = Journal
-        fields = '__all__'  
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if instance.language_id:
+            ret['language'] = LanguageSerializer(instance.language).data
+        if instance.platform_id:
+            ret['platform'] = PlatformSerializer(instance.platform).data
+        if instance.country_id:
+            ret['country'] = CountrySerializer(instance.country).data
+        if instance.thematic_area_id:
+            ret['thematic_area'] = ThematicAreaSerializer(instance.thematic_area).data
+        return ret
         
 class JournalSerializer1(serializers.ModelSerializer):
     class Meta:
