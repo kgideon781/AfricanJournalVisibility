@@ -28,48 +28,46 @@ class JournalFilter(django_filters.FilterSet):
         fields = []
 
     def custom_search(self, queryset, name, value):
+        # Per-word AND against journal_title OR publishers_name.
+        # Every whitespace-separated word in the query must appear (case-insensitive
+        # substring) in the title or publisher. ISSN is checked as a whole-string
+        # bypass so users can paste an ISSN directly.
+        #
+        # SearchRank is annotated for ordering only (not filtering) — the vector
+        # is weighted A/B/B/D so title hits rank ahead of publisher/summary hits.
+        #
+        # Design note: the old code used SearchQuery OR across words + rank>=0.05
+        # + a wide icontains OR across every field. Typing a full journal title
+        # returned 400-1500 rows because rank 0.05 catches almost everything.
         if not value:
-            return queryset  # Prevent infinite recursion
-        
-        words = value.split()[:10]  # Limit to first 10 words
+            return queryset
 
-        # Use 'websearch' mode for better query interpretation
-        search_query = SearchQuery(words[0], search_type='websearch')
-        for word in words[1:]:
-            search_query |= SearchQuery(word, search_type='websearch')
+        words = [w for w in value.split() if w.strip()][:10]
+        if not words:
+            return queryset
 
-        # Define the search vector
-        search_vector = SearchVector(
-            'journal_title',
-            'summary',
-            'h_index',
-            'platform__platform',
-            'country__country',
-            'publishers_name',
-            'thematic_area__thematic_area',
-            'issn_number',
-            'language__language'
+        per_word = Q()
+        first = True
+        for w in words:
+            clause = Q(journal_title__icontains=w) | Q(publishers_name__icontains=w)
+            per_word = clause if first else (per_word & clause)
+            first = False
+
+        # Weighted vector so title matches sort ahead of publisher/summary matches.
+        search_vector = (
+            SearchVector('journal_title', weight='A')
+            + SearchVector('publishers_name', weight='B')
+            + SearchVector('issn_number', weight='B')
+            + SearchVector('summary', weight='D')
         )
-
-        # Annotate queryset with SearchRank for relevance
+        search_query = SearchQuery(value, search_type='websearch')
         queryset = queryset.annotate(
             rank=SearchRank(search_vector, search_query),
-            highlight=SearchHeadline('summary', search_query)  # Highlights matched text
+            highlight=SearchHeadline('summary', search_query),
         )
-
-        # Perform both full-text search and partial matching
         return queryset.filter(
-            Q(rank__gte=0.05) |
-            Q(journal_title__icontains=value) |
-            Q(platform__platform__icontains=value) |
-            Q(country__country__icontains=value) |
-            Q(publishers_name__icontains=value) |
-            Q(thematic_area__thematic_area__icontains=value) |
-            Q(issn_number__icontains=value) |
-            Q(language__language__icontains=value) |
-            Q(h_index__icontains=value) |
-            Q(summary__icontains=value)
-        ).order_by('-rank')  # Removed .distinct() to avoid recursion errors
+            per_word | Q(issn_number__icontains=value)
+        ).order_by('-rank')
 
 
 
