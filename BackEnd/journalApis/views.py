@@ -434,10 +434,25 @@ class UserJournalViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             if self.action == 'list':
                 if self.request.query_params.get('scope') == 'all':
-                    return Journal.objects.all().distinct()
-                return Journal.objects.filter(user=user).distinct()
-            return Journal.objects.all().distinct()
-        return Journal.objects.filter(user=user).distinct()
+                    qs = Journal.objects.all()
+                else:
+                    qs = Journal.objects.filter(user=user)
+            else:
+                qs = Journal.objects.all()
+        else:
+            qs = Journal.objects.filter(user=user)
+
+        # Optional server-side text search (icontains across the fields most
+        # users type). Only applied on list; retrieve/update/destroy ignore it.
+        if self.action == 'list':
+            q = (self.request.query_params.get('search') or '').strip()
+            if q:
+                qs = qs.filter(
+                    Q(journal_title__icontains=q)
+                    | Q(publishers_name__icontains=q)
+                    | Q(issn_number__icontains=q)
+                )
+        return qs.distinct()
 
 
 @extend_schema_view(
