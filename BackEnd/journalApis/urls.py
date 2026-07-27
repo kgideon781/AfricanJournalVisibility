@@ -21,7 +21,9 @@ from .views import (
     UnapprovedJournalListView,
     UnapprovedJournalDetailView,
     ApproveJournalView,
+    SubmitJournalView,
 )
+from .views_bulk import BulkArticleUploadView
 
 
 
@@ -188,6 +190,8 @@ urlpatterns=[
    path('journal_stats/', views.journal_stats),
    path('generate-description/', generate_journal_description, name='generate-description'),
    path('api/journalcreate/', JournalCreateView.as_view(), name='journal-create'),
+   path('api/journals/submit/', SubmitJournalView.as_view(), name='journal-submit'),
+   path('api/bulk_upload/', BulkArticleUploadView.as_view(), name='bulk-upload'),
 
    path('api/languages/', language_list, name='language-list'),  # List and create languages
    path('api/languages/<int:pk>/', language_detail, name='language-detail'),  # Retrieve, update, delete specific language

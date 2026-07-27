@@ -106,6 +106,58 @@ class JournalSerializer1(serializers.ModelSerializer):
         model = Journal
         fields = '__all__'
 
+
+class JournalSubmissionSerializer(serializers.ModelSerializer):
+    """Author-facing submission serializer. Whitelists the fields an author
+    can populate; `approved` and `user` are stamped by the view."""
+
+    volume = serializers.DictField(write_only=True, required=False)
+
+    class Meta:
+        model = Journal
+        fields = [
+            'id',
+            'journal_title',
+            'publishers_name',
+            'issn_number',
+            'link',
+            'summary',
+            'language',
+            'platform',
+            'country',
+            'thematic_area',
+            'aim_identifier',
+            'open_access_journal',
+            'listed_in_doaj',
+            'present_issn',
+            'publisher_in_cope',
+            'online_publisher_africa',
+            'hosted_on_inasps',
+            'google_scholar_index',
+            'volume',
+        ]
+
+    def validate_volume(self, value):
+        if not value:
+            return value
+        try:
+            volume_number = int(value.get('volume_number'))
+            year = int(value.get('year'))
+        except (TypeError, ValueError):
+            raise serializers.ValidationError(
+                "volume.volume_number and volume.year are required integers."
+            )
+        issue_number = value.get('issue_number', 1)
+        try:
+            issue_number = int(issue_number)
+        except (TypeError, ValueError):
+            raise serializers.ValidationError("volume.issue_number must be an integer.")
+        return {
+            'volume_number': volume_number,
+            'issue_number': issue_number,
+            'year': year,
+        }
+
 # Serializer for Article model
 class FeedBackSerializer(serializers.ModelSerializer):
     class Meta:
@@ -140,6 +192,14 @@ class ManuscriptSerializer(serializers.ModelSerializer):
             'created_at'
         ]
         read_only_fields = ['corresponding_author', 'status', 'created_at']
+
+    def to_representation(self, instance):
+        # Sensitive manuscript files require a signed URL; see media_views.py.
+        ret = super().to_representation(instance)
+        from .media_views import make_signed_media_url
+        ret['file'] = make_signed_media_url(self.context.get('request'), instance.file)
+        return ret
+
 
 # Review Serializer
 class ReviewSerializer(serializers.ModelSerializer):

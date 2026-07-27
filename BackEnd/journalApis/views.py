@@ -6,16 +6,13 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Journal,Feedback,Manuscript,ReviewerAssignment,EditorialDecision
-from .serializers import JournalSerializer,JournalSerializer1,LanguageSerializer,PlatformSerializer,CountrySerializer,ThematicAreaSerializer,VolumeSerializer,ArticleSerializer,VolumeSerializer1
+from .serializers import JournalSerializer,JournalSerializer1,LanguageSerializer,PlatformSerializer,CountrySerializer,ThematicAreaSerializer,VolumeSerializer,ArticleSerializer,VolumeSerializer1,JournalSubmissionSerializer
 from .serializers import FeedBackSerializer
 from .serializers import ManuscriptSerializer,ReviewSerializer,ReviewerAssignmentSerializer
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import JournalFilter,ArticleFilter
-from .notifications import (
-    notify_manuscript_submitted, notify_reviewer_assigned,
-    notify_review_submitted, notify_editorial_decision,
-)
+from .notifications import notify_manuscript_submitted, notify_reviewer_assigned, notify_review_submitted, notify_editorial_decision
 from rest_framework import generics
 from rest_framework.decorators import api_view
 import google.generativeai as genai
@@ -262,12 +259,69 @@ def generate_journal_description(request):
     description="Submit a new journal entry. All required fields must be provided in the request body.",
 )
 class JournalCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = JournalSerializer1(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(
+    tags=['Journals'],
+    summary="Submit a new journal for approval",
+    description=(
+        "Authenticated users submit a journal. The journal is saved with "
+        "`approved=False` and `user=request.user`, and appears in the staff "
+        "approval queue. Optionally accepts a `volume` object "
+        "(`volume_number`, `year`, optional `issue_number`) that is created "
+        "atomically alongside the journal."
+    ),
+)
+class SubmitJournalView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = JournalSubmissionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        volume_payload = serializer.validated_data.pop('volume', None)
+
+        from django.db import transaction
+        with transaction.atomic():
+            journal = Journal.objects.create(
+                user=request.user,
+                approved=False,
+                **serializer.validated_data,
+            )
+            volume_response = None
+            if volume_payload:
+                volume = Volume.objects.create(journal=journal, **volume_payload)
+                volume_response = {
+                    'id': volume.id,
+                    'volume_number': volume.volume_number,
+                    'issue_number': volume.issue_number,
+                    'year': volume.year,
+                }
+
+        return Response(
+            {
+                'message': (
+                    f'Journal "{journal.journal_title}" submitted successfully '
+                    f'and is awaiting editor approval.'
+                ),
+                'journal': {
+                    'id': journal.id,
+                    'journal_title': journal.journal_title,
+                    'approved': journal.approved,
+                },
+                'volume': volume_response,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 

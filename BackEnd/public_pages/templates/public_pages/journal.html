@@ -1,0 +1,100 @@
+{% extends "public_pages/base_seo.html" %}
+{% load public_page_extras %}
+
+{% block title %}{{ journal.journal_title }} &middot; {{ site_name }}{% endblock %}
+
+{% block meta_description %}{% if journal.summary %}<meta name="description" content="{{ journal.summary|striptags|truncatechars:300 }}">{% endif %}{% endblock %}
+
+{% block citation_tags %}
+<meta name="citation_journal_title" content="{{ journal.journal_title }}">
+{% if journal.issn_number %}<meta name="citation_issn" content="{{ journal.issn_number }}">{% endif %}
+{% if journal.publishers_name %}<meta name="citation_publisher" content="{{ journal.publishers_name }}">{% endif %}
+{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Periodical",
+  "name": "{{ journal.journal_title|escapejs }}",
+  "url": "{{ canonical_url }}"{% if journal.issn_number %},
+  "issn": "{{ journal.issn_number|escapejs }}"{% endif %}{% if journal.publishers_name %},
+  "publisher": {"@type": "Organization", "name": "{{ journal.publishers_name|escapejs }}"}{% endif %}{% if journal.summary %},
+  "description": "{{ journal.summary|striptags|escapejs }}"{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <a href="/">Home</a> &rsaquo;
+  <a href="/journals/">Journals</a> &rsaquo;
+  <span>{{ journal.journal_title }}</span>
+</nav>
+
+<article class="journal-landing">
+  <h1 class="journal-title">{{ journal.journal_title }}</h1>
+
+  <dl class="journal-facts">
+    {% if journal.publishers_name %}<dt>Publisher</dt><dd>{{ journal.publishers_name }}</dd>{% endif %}
+    {% if journal.issn_number %}<dt>ISSN</dt><dd>{{ journal.issn_number }}</dd>{% endif %}
+    {% if journal.country %}<dt>Country</dt><dd>{{ journal.country.country }}</dd>{% endif %}
+    {% if journal.language %}<dt>Language</dt><dd>{{ journal.language.language }}</dd>{% endif %}
+    {% if journal.thematic_area %}<dt>Thematic area</dt><dd>{{ journal.thematic_area.thematic_area }}</dd>{% endif %}
+    {% if journal.open_access_journal %}<dt>Access</dt><dd>Open access</dd>{% endif %}
+  </dl>
+
+  {% if journal.summary %}
+  <section class="journal-summary">
+    <h2>About this journal</h2>
+    <p>{{ journal.summary|linebreaksbr }}</p>
+  </section>
+  {% endif %}
+
+  {% if article_count == 0 %}
+    <section class="journal-empty">
+      <h2>Hosted content</h2>
+      <p>No hosted content yet on Afrika Journals.</p>
+      {% if journal.link %}
+        <p>Visit the journal at <a href="{{ journal.link }}" rel="noopener">{{ journal.link }}</a>.</p>
+      {% endif %}
+    </section>
+  {% else %}
+    <section class="journal-volumes">
+      <h2>Volumes ({{ article_count }} article{{ article_count|pluralize }})</h2>
+      {% for volume in volumes %}
+        <div class="volume-block">
+          <h3 class="volume-heading">
+            Volume {{ volume.volume_number }}{% if volume.issue_number %}, Issue {{ volume.issue_number }}{% endif %}{% if volume.year %} ({{ volume.year }}){% endif %}
+          </h3>
+          <ul class="article-list">
+            {% for a in articles_by_volume|get_item:volume.id %}
+              <li>
+                <a href="/journals/{{ journal.slug }}/articles/{{ a.id }}/">{{ a.title }}</a>
+                {% if a.authors %}<span class="article-list-authors">&mdash; {{ a.authors|truncatechars:120 }}</span>{% endif %}
+              </li>
+            {% empty %}
+              <li class="muted">No articles hosted for this volume yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% empty %}
+        {% if not orphan_articles %}<p class="muted">No volumes hosted yet.</p>{% endif %}
+      {% endfor %}
+      {% if orphan_articles %}
+        <div class="volume-block">
+          <h3 class="volume-heading">Other articles</h3>
+          <ul class="article-list">
+            {% for a in orphan_articles %}
+              <li>
+                <a href="/journals/{{ journal.slug }}/articles/{{ a.id }}/">{{ a.title }}</a>
+                {% if a.authors %}<span class="article-list-authors">&mdash; {{ a.authors|truncatechars:120 }}</span>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </section>
+  {% endif %}
+</article>
+{% endblock %}

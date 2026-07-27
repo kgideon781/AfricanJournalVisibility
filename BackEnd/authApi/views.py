@@ -35,7 +35,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         # Add custom claims
         token['user_name'] = user.user_name
-        token['email']=user.email 
+        token['email']=user.email
         token['phone_number']=user.phone_number
         token['location']=user.location
         token['approved']=user.approved
@@ -44,6 +44,21 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['roles'] = list(user.groups.values_list('name', flat=True))
         # ...
         return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        # Gate: users must be admin-approved before they can obtain a token.
+        # Existing users were backfilled to approved=True on 2026-07-21; new
+        # signups default to approved=False and need staff to flip the flag.
+        if not self.user.approved:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied(
+                detail=(
+                    "Your account is awaiting administrator approval. "
+                    "Please contact a platform administrator."
+                )
+            )
+        return data
 
 @extend_schema(
     tags=['Auth'],
@@ -189,4 +204,147 @@ class PasswordResetConfirmView(GenericAPIView):
 class PasswordResetCompleteView(GenericAPIView):
     def get(self, request):
         return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
-    
+
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from .serializers import UserListSerializer
+
+
+class _IsStaffAndActive(IsAuthenticated):
+    def has_permission(self, request, view):
+        return bool(
+            super().has_permission(request, view)
+            and request.user
+            and request.user.is_staff
+            and request.user.is_active
+        )
+
+
+class _UserListPagination(PageNumberPagination):
+    page_size = 25
+    page_size_query_param = 'page_size'
+    max_page_size = 200
+
+
+@extend_schema(
+    tags=['Auth'],
+    summary="List all registered users (staff only)",
+    description=(
+        "Returns a paginated list of every user on the platform, with their "
+        "roles (Django groups) and status flags. Accessible only to active "
+        "staff members."
+    ),
+)
+class UserListView(APIView):
+    permission_classes = [_IsStaffAndActive]
+
+    def get(self, request):
+        queryset = NewUser.objects.all().order_by('-start_date').prefetch_related('groups')
+        paginator = _UserListPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        serializer = UserListSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+# Group names this endpoint knows how to add/remove. Membership in other
+# groups (if any) is preserved untouched.
+_MANAGED_ROLE_GROUPS = ('Author', 'Reviewer', 'Editor')
+
+
+@extend_schema(
+    tags=['Auth'],
+    summary="Update a user's flags and roles (staff only)",
+    description=(
+        "PATCH accepts any subset of: is_active, is_staff, is_superuser, "
+        "approved, roles. `roles` is a list restricted to Author/Reviewer/"
+        "Editor; membership in those three groups is replaced with what is "
+        "sent. Self-guard: staff cannot strip their own is_active/is_staff/"
+        "is_superuser. Auto-sets is_staff=True when is_superuser=True."
+    ),
+)
+class UserUpdateView(APIView):
+    permission_classes = [_IsStaffAndActive]
+
+    def patch(self, request, user_id):
+        from django.contrib.auth.models import Group
+        from django.shortcuts import get_object_or_404
+
+        target = get_object_or_404(NewUser, id=user_id)
+        payload = request.data or {}
+
+        is_self = request.user.id == target.id
+        errors = {}
+
+        # Whitelist of boolean flags we accept.
+        bool_fields = ('is_active', 'is_staff', 'is_superuser', 'approved')
+        updates = {}
+        for f in bool_fields:
+            if f in payload:
+                val = payload[f]
+                if not isinstance(val, bool):
+                    errors[f] = 'Must be a boolean.'
+                    continue
+                updates[f] = val
+
+        # Self-guard: reject stripping own privileges.
+        if is_self:
+            for f in ('is_active', 'is_staff', 'is_superuser'):
+                if updates.get(f) is False:
+                    errors[f] = (
+                        f'You cannot set {f}=False on your own account. '
+                        f'Ask another admin to do it.'
+                    )
+
+        # Django convention: a superuser must be able to reach /admin, so
+        # flipping is_superuser=True implies is_staff=True.
+        if updates.get('is_superuser') is True:
+            updates['is_staff'] = True
+
+        # Role management: replace membership in the three managed groups.
+        roles_payload = payload.get('roles', None)
+        role_groups_to_set = None
+        if roles_payload is not None:
+            if not isinstance(roles_payload, list) or not all(
+                isinstance(r, str) for r in roles_payload
+            ):
+                errors['roles'] = 'Must be a list of group name strings.'
+            else:
+                unknown = [
+                    r for r in roles_payload if r not in _MANAGED_ROLE_GROUPS
+                ]
+                if unknown:
+                    errors['roles'] = (
+                        f'Unknown role(s): {unknown}. Allowed: '
+                        f'{list(_MANAGED_ROLE_GROUPS)}.'
+                    )
+                else:
+                    role_groups_to_set = list(set(roles_payload))
+
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Apply flag updates.
+        if updates:
+            for f, v in updates.items():
+                setattr(target, f, v)
+            target.save(update_fields=list(updates.keys()))
+
+        # Apply role updates: remove from managed groups the user shouldn't be
+        # in, and add to the ones they should. Other groups untouched.
+        if role_groups_to_set is not None:
+            managed_groups = Group.objects.filter(name__in=_MANAGED_ROLE_GROUPS)
+            managed_by_name = {g.name: g for g in managed_groups}
+            for name in _MANAGED_ROLE_GROUPS:
+                g = managed_by_name.get(name)
+                if not g:
+                    continue
+                if name in role_groups_to_set:
+                    target.groups.add(g)
+                else:
+                    target.groups.remove(g)
+
+        # Return the fresh state so the UI can update the row in place.
+        target.refresh_from_db()
+        serializer = UserListSerializer(target)
+        return Response(serializer.data, status=status.HTTP_200_OK)

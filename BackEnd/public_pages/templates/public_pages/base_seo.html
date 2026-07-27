@@ -1,0 +1,33 @@
+{% load static %}<!doctype html>
+<html lang="{% block lang %}en{% endblock %}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}{{ site_name }}{% endblock %}</title>
+{% block meta_description %}{% endblock %}
+<link rel="canonical" href="{{ canonical_url }}">
+<meta name="robots" content="index,follow">
+<link rel="icon" type="image/png" href="/logo.png">
+{% block citation_tags %}{% endblock %}
+{% block json_ld %}{% endblock %}
+<link rel="stylesheet" href="{% static 'public_pages/landing.css' %}">
+</head>
+<body>
+<header class="site-header">
+  <a class="site-brand" href="/">
+    <img src="/logo.png" alt="Afrika Journals" class="brand-logo">
+    <span class="brand-name">Afrika Journals</span>
+  </a>
+  <nav class="site-nav">
+    <a href="/">Home</a>
+    <a href="/journals/">Journals</a>
+  </nav>
+</header>
+<main class="landing-main">
+{% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <p>Afrika Journals Platform &middot; A module of Africa Research Connect &middot; APHRC</p>
+</footer>
+</body>
+</html>

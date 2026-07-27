@@ -24,6 +24,29 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
+class UserListSerializer(serializers.ModelSerializer):
+    roles = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NewUser
+        fields = (
+            'id',
+            'email',
+            'user_name',
+            'phone_number',
+            'location',
+            'start_date',
+            'is_staff',
+            'is_superuser',
+            'is_active',
+            'approved',
+            'roles',
+        )
+
+    def get_roles(self, obj):
+        return list(obj.groups.values_list('name', flat=True))
+
+
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
 

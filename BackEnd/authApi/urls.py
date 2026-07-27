@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from django.contrib.auth import views as auth_views
-from .views import PasswordResetView, PasswordResetConfirmView, PasswordResetCompleteView
+from .views import PasswordResetView, PasswordResetConfirmView, PasswordResetCompleteView, UserListView, UserUpdateView
 from drf_spectacular.utils import extend_schema
 
 
@@ -30,6 +30,8 @@ urlpatterns=[
     path('reset_password/', PasswordResetView.as_view(), name='api_reset_password'),
     path('reset/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='api_password_reset_confirm'),
     path('reset_password_complete/', PasswordResetCompleteView.as_view(), name='api_password_reset_complete'),
+    path('users/', UserListView.as_view(), name='user-list'),
+    path('users/<int:user_id>/', UserUpdateView.as_view(), name='user-update'),
    
 #     path('reset_password/',
 #          auth_views.PasswordResetView.as_view(template_name="password_reset.html"),

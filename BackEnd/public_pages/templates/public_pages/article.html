@@ -1,0 +1,114 @@
+{% extends "public_pages/base_seo.html" %}
+
+{% block lang %}{{ language|default:"en" }}{% endblock %}
+
+{% block title %}{{ article.title }} &middot; {{ journal.journal_title }}{% endblock %}
+
+{% block meta_description %}{% if article.abstract %}<meta name="description" content="{{ article.abstract|striptags|truncatechars:300 }}">{% endif %}{% endblock %}
+
+{% block citation_tags %}
+<meta name="citation_title" content="{{ article.title }}">
+{% for author in authors %}<meta name="citation_author" content="{{ author }}">
+{% endfor %}{% if article.publication_date %}<meta name="citation_publication_date" content="{{ article.publication_date|date:"Y/m/d" }}">
+<meta name="citation_online_date" content="{{ article.publication_date|date:"Y/m/d" }}">
+{% endif %}<meta name="citation_journal_title" content="{{ journal.journal_title }}">
+{% if journal.issn_number %}<meta name="citation_issn" content="{{ journal.issn_number }}">
+{% endif %}{% if publisher %}<meta name="citation_publisher" content="{{ publisher }}">
+{% endif %}{% if volume %}{% if volume.volume_number %}<meta name="citation_volume" content="{{ volume.volume_number }}">
+{% endif %}{% if volume.issue_number %}<meta name="citation_issue" content="{{ volume.issue_number }}">
+{% endif %}{% endif %}{% if article.page_start %}<meta name="citation_firstpage" content="{{ article.page_start }}">
+{% endif %}{% if article.page_end %}<meta name="citation_lastpage" content="{{ article.page_end }}">
+{% endif %}{% if article.doi %}<meta name="citation_doi" content="{{ article.doi }}">
+{% endif %}{% if pdf_url %}<meta name="citation_pdf_url" content="{{ pdf_url }}">
+{% endif %}<meta name="citation_abstract_html_url" content="{{ canonical_url }}">
+{% if language %}<meta name="citation_language" content="{{ language }}">
+{% endif %}{% for kw in keywords %}<meta name="citation_keywords" content="{{ kw }}">
+{% endfor %}
+{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ScholarlyArticle",
+  "headline": "{{ article.title|escapejs }}",
+  "url": "{{ canonical_url }}",
+  {% if article.abstract %}"abstract": "{{ article.abstract|striptags|escapejs }}",{% endif %}
+  {% if article.doi %}"identifier": [
+    {"@type": "PropertyValue", "propertyID": "doi", "value": "{{ article.doi|escapejs }}"}
+  ],{% endif %}
+  "author": [{% for author in authors %}{"@type": "Person", "name": "{{ author|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}],
+  {% if publisher %}"publisher": {"@type": "Organization", "name": "{{ publisher|escapejs }}"},{% endif %}
+  "isPartOf": {
+    "@type": "Periodical",
+    "name": "{{ journal.journal_title|escapejs }}"{% if journal.issn_number %},
+    "issn": "{{ journal.issn_number|escapejs }}"{% endif %}
+  }{% if article.publication_date %},
+  "datePublished": "{{ article.publication_date|date:"Y-m-d" }}"{% endif %}{% if language %},
+  "inLanguage": "{{ language|escapejs }}"{% endif %}{% if pdf_url %},
+  "encoding": {"@type": "MediaObject", "encodingFormat": "application/pdf", "contentUrl": "{{ pdf_url|escapejs }}"}{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <a href="/">Home</a> &rsaquo;
+  <a href="/journals/">Journals</a> &rsaquo;
+  <a href="/journals/{{ journal.slug }}/">{{ journal.journal_title }}</a> &rsaquo;
+  <span>{{ article.title|truncatechars:60 }}</span>
+</nav>
+
+<article class="article-landing">
+  <h1 class="article-title">{{ article.title }}</h1>
+
+  {% if authors %}
+  <p class="article-authors">
+    {% for author in authors %}<span>{{ author }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}
+  </p>
+  {% endif %}
+
+  <p class="article-citation">
+    <em>{{ journal.journal_title }}</em>{% if volume %}
+      &middot; Volume {{ volume.volume_number }}{% if volume.issue_number %}, Issue {{ volume.issue_number }}{% endif %}{% if volume.year %} ({{ volume.year }}){% endif %}{% endif %}{% if article.page_start %}
+      &middot; pp. {{ article.page_start }}{% if article.page_end %}&ndash;{{ article.page_end }}{% endif %}{% endif %}
+  </p>
+
+  <div class="article-actions">
+    {% if pdf_url %}
+    <a class="btn btn-primary" href="{{ pdf_url }}" rel="noopener">Download PDF</a>
+    {% endif %}
+    {% if article.doi %}
+    <a class="btn btn-secondary" href="https://doi.org/{{ article.doi }}" rel="noopener">DOI: {{ article.doi }}</a>
+    {% endif %}
+  </div>
+
+  {% if article.abstract %}
+  <section class="article-abstract">
+    <h2>Abstract</h2>
+    <p>{{ article.abstract|linebreaksbr }}</p>
+  </section>
+  {% endif %}
+
+  {% if keywords %}
+  <section class="article-keywords">
+    <h2>Keywords</h2>
+    <ul class="keyword-list">
+      {% for kw in keywords %}<li>{{ kw }}</li>{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <section class="article-meta">
+    <h2>Article information</h2>
+    <dl class="meta-grid">
+      {% if article.publication_date %}<dt>Published</dt><dd>{{ article.publication_date|date:"j F Y" }}</dd>{% endif %}
+      {% if language %}<dt>Language</dt><dd>{{ language }}</dd>{% endif %}
+      {% if publisher %}<dt>Publisher</dt><dd>{{ publisher }}</dd>{% endif %}
+      {% if article.license_url %}<dt>License</dt><dd><a href="{{ article.license_url }}" rel="noopener">{{ article.license_url }}</a></dd>{% endif %}
+      {% if article.doi %}<dt>DOI</dt><dd>{{ article.doi }}</dd>{% endif %}
+      {% if journal.issn_number %}<dt>Journal ISSN</dt><dd>{{ journal.issn_number }}</dd>{% endif %}
+    </dl>
+  </section>
+</article>
+{% endblock %}

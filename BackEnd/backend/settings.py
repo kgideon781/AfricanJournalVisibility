@@ -26,7 +26,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-yfax-5v=kmb7nud9zp3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', '0') == '1'
 
-ALLOWED_HOSTS = ['127.0.0.1','localhost',"192.168.100.95","192.168.100.8","10.176.203.209","aphrc.site","backend.afrikajournals.org"]
+ALLOWED_HOSTS = ['127.0.0.1','localhost',"192.168.100.95","192.168.100.8","10.176.203.209","aphrc.site","backend.afrikajournals.org","afrikajournals.org","www.afrikajournals.org","dashboard.afrikajournals.org"]
 
 
 # Application definition
@@ -52,12 +52,24 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'django_celery_beat',
     'django_celery_results',
-    'blog',   
+    'blog',
+    'public_pages',
     'grey_literature',
     'oai_pmh',
+    'django.contrib.sitemaps',
 ]
 
-REST_FRAMEWORK = { 
+# Absolute public URL — baked into citation_pdf_url and <link rel="canonical">
+# on Django-rendered landing pages. Must be the domain Scholar / users see.
+SITE_URL = 'https://afrikajournals.org'
+
+# Bulk upload accommodates a spreadsheet + up to 200 PDFs. Default Django
+# limits are 2.5 MB total non-file body and 100 files — both too small.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 200 * 1024 * 1024  # 200 MB
+DATA_UPLOAD_MAX_NUMBER_FILES = 200
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024    # 5 MB per file before disk
+
+REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
     # YOUR SETTINGS
@@ -290,7 +302,7 @@ DEFAULT_FROM_EMAIL = 'nyonjeron@gmail.com'
 
 #FRONTEND_URL = 'http://localhost:5174'  # Replace with your frontend URL
 
-FRONTEND_URL = 'https://afrijour.web.app'
+FRONTEND_URL = 'https://dashboard.afrikajournals.org'
 JAZZMIN_SETTINGS = {
    "custom_css": "css/custom_admin.css",
     
@@ -454,7 +466,7 @@ SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS automatically
 CSRF_TRUSTED_ORIGINS = [
     "https://backend.afrikajournals.org",
     "https://afrikajournals.org",
-    "https://afrijour.web.app",
+    "https://dashboard.afrikajournals.org",
 ]
 
 SECURE_SSL_REDIRECT = False
