@@ -1,0 +1,207 @@
+/* Afrika Journals — public landing pages. Kept small (<20 KB, no fonts, no
+   images) so pages fit the low-bandwidth budget in the concept doc. Palette
+   mirrors the dashboard (warm off-white + deep green + gold accent). */
+
+:root {
+  --bg: #fbfaf3;
+  --ink: #16281f;
+  --ink-muted: #556b60;
+  --card: #ffffff;
+  --border: #dcd8c6;
+  --primary: #b8891a;       /* gold */
+  --primary-ink: #16281f;
+  --secondary: #245c46;     /* deep green */
+  --secondary-soft: #eaf3ec;
+  --max-w: 900px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--secondary); text-decoration: none; }
+a:hover, a:focus { text-decoration: underline; }
+
+/* ─── site chrome ─── */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+}
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+}
+.site-brand:hover { text-decoration: none; }
+.brand-logo { height: 36px; width: auto; }
+.brand-name { font-weight: 600; font-size: 1rem; }
+.site-nav a {
+  margin-left: 1rem;
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+.site-nav a:hover { color: var(--secondary); }
+
+.landing-main {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 1.5rem 1.25rem;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ─── breadcrumbs ─── */
+.breadcrumbs {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  margin-bottom: 1rem;
+}
+.breadcrumbs a { color: var(--ink-muted); }
+.breadcrumbs a:hover { color: var(--secondary); }
+.breadcrumbs span { color: var(--ink); }
+
+/* ─── article landing ─── */
+.article-title {
+  font-size: 1.75rem;
+  line-height: 1.25;
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+}
+.article-authors {
+  font-size: 1rem;
+  color: var(--secondary);
+  margin: 0 0 0.5rem;
+}
+.article-citation {
+  font-size: 0.95rem;
+  color: var(--ink-muted);
+  margin: 0 0 1.25rem;
+}
+.article-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.btn {
+  display: inline-block;
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+.btn-primary:hover { background: #a97a10; text-decoration: none; }
+.btn-secondary {
+  background: transparent;
+  color: var(--secondary);
+  border-color: var(--secondary);
+}
+.btn-secondary:hover { background: var(--secondary-soft); text-decoration: none; }
+
+.article-abstract h2,
+.article-keywords h2,
+.article-meta h2,
+.journal-summary h2,
+.journal-volumes h2,
+.journal-empty h2 {
+  font-size: 1.1rem;
+  color: var(--secondary);
+  margin: 1.75rem 0 0.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+}
+.article-abstract p { margin: 0.5rem 0; }
+
+.keyword-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.keyword-list li {
+  background: var(--secondary-soft);
+  color: var(--secondary);
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.meta-grid, .journal-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1.25rem;
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+}
+.meta-grid dt, .journal-facts dt {
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+.meta-grid dd, .journal-facts dd { margin: 0; color: var(--ink); }
+
+/* ─── journal landing ─── */
+.journal-title {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0 0 1rem;
+  color: var(--ink);
+}
+.volume-block {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  margin: 0.9rem 0;
+  background: var(--card);
+}
+.volume-heading {
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin: 0 0 0.5rem;
+}
+.article-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.article-list li {
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--border);
+}
+.article-list li:first-child { border-top: none; }
+.article-list-authors { color: var(--ink-muted); font-size: 0.9rem; }
+.muted { color: var(--ink-muted); font-style: italic; }
+
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .article-title { font-size: 1.4rem; }
+  .journal-title { font-size: 1.6rem; }
+  .meta-grid, .journal-facts { grid-template-columns: 1fr; gap: 0.15rem 0; }
+  .meta-grid dt, .journal-facts dt { margin-top: 0.5rem; }
+}
